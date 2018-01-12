@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  redis:
+    image: redis
+    command: redis-server
+    ports:
+      - '6379:6379'
+  web:
+    build: ./django_channels
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./django_channels:/django_channels
+    ports:
+      - "8000:8000"
+  worker_channels:
+    build: ./django_channels
+    command: python manage.py runworker
+    volumes:
+      - ./django_channels:/django_channels
+    links:
+      - redis
+  channels:
+    build: ./django_channels
+    command: daphne -b 0.0.0.0 -p 8001 django_channels.asgi:channel_layer
+    volumes:
+      - ./django_channels:/django_channels
+    ports:
+      - "8001:8001"
+    links:
+      - redis
